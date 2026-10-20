@@ -5,3 +5,24 @@
 html { scroll-behavior: smooth; }
 body { font-family: Arial, Helvetica, sans-serif; }
 ::selection { background: #dbeafe; color: #173B57; }
+
+
+/* Psicoteca identity: opt-in interaction inspired by the supplied opening-book sequence */
+.psicoteca-logo{display:inline-grid;place-items:center;position:relative;width:165px;height:47px;flex-shrink:0;outline-offset:5px;color:#173B57}
+.psicoteca-logo-full,.psicoteca-logo-mark{grid-area:1/1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.psicoteca-logo-full{font-size:22px;font-weight:850;letter-spacing:-.055em;opacity:1;transform:scale(1);transition:opacity .24s ease,transform .24s ease}
+.psicoteca-logo-mark{opacity:0;transform:translateY(6px) scale(.92);transition:opacity .3s ease,transform .3s ease;gap:4px}
+.psicoteca-psi{font-size:31px;line-height:1;font-weight:750;letter-spacing:-.065em}
+.psicoteca-book{width:49px;height:41px;overflow:visible;color:#173B57}
+.book-left,.book-right,.book-page{transform-box:fill-box;transform-origin:center bottom}
+.psicoteca-logo.is-playing .psicoteca-logo-full{animation:logo-full 2.05s ease both}
+.psicoteca-logo.is-playing .psicoteca-logo-mark{animation:logo-mark 2.05s ease both}
+.psicoteca-logo.is-playing .book-left{animation:book-left 2.05s ease both}
+.psicoteca-logo.is-playing .book-right{animation:book-right 2.05s ease both}
+.psicoteca-logo.is-playing .book-page{animation:book-page 2.05s ease both}
+@keyframes logo-full{0%,8%,85%,100%{opacity:1;transform:scale(1)}20%,72%{opacity:0;transform:scale(.95)}}
+@keyframes logo-mark{0%,10%,83%,100%{opacity:0;transform:translateY(5px) scale(.94)}24%,72%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes book-left{0%,25%,70%,100%{transform:rotate(0)}39%,54%{transform:rotate(-13deg)}}
+@keyframes book-right{0%,25%,70%,100%{transform:rotate(0)}39%,54%{transform:rotate(13deg)}}
+@keyframes book-page{0%,27%,67%,100%{transform:rotate(0);opacity:0}39%{transform:rotate(-22deg);opacity:1}52%{transform:rotate(16deg);opacity:1}}
+@media(prefers-reduced-motion:reduce){.psicoteca-logo *{animation:none!important;transition:none!important}.psicoteca-logo-full{opacity:1!important}.psicoteca-logo-mark{opacity:0!important}}
