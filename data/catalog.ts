@@ -1,12 +1,8 @@
 import {concepts} from "@/data/concepts";
 import {disorders,medicines,therapies} from "@/data/comparisons";
-export const fourCategories=[
- {id:"psicopatologias",title:"Psicopatologías",subtitle:"Trastornos y diagnósticos",color:"bg-sky-50",symbol:"brain"},
- {id:"psicofarmacologia",title:"Psicofarmacología",subtitle:"Principios activos y familias",color:"bg-rose-50",symbol:"pill"},
- {id:"teoria",title:"Teoría",subtitle:"Conceptos y modelos",color:"bg-indigo-50",symbol:"book"},
- {id:"evaluaciones",title:"Evaluaciones",subtitle:"Instrumentos y entrevistas",color:"bg-amber-50",symbol:"clipboard"}
-] as const;
-export type CategoryId=(typeof fourCategories)[number]["id"];
+import {fourCategories,type CategoryId} from "@/data/category-config";
+export {fourCategories};
+export type {CategoryId};
 export type LibraryItem={id:string;title:string;category:CategoryId;family:string;summary:string;essentials:string[];deep:string;references:{label:string;url?:string}[];related:string[];status:"borrador"|"pendiente";synonyms:string[]};
 const categoryMap:Record<string,CategoryId>={psicopatologia:"psicopatologias",psicofarmacologia:"psicofarmacologia",teoria:"teoria",desarrollo:"teoria",psicoterapia:"teoria",evaluacion:"evaluaciones"};
 const converted:LibraryItem[]=concepts.map(c=>({id:c.slug,title:c.title,category:categoryMap[c.category]??"teoria",family:"Conceptos generales",summary:c.summary,essentials:c.essentials.map(e=>e.heading+": "+e.text+(e.bullets?.length?" "+e.bullets.join("; "):"")),deep:c.deeper.map(e=>e.heading+": "+e.text).join("\n\n"),references:c.references.map(r=>({label:r.author+" — "+r.title,url:r.url})),related:c.related,status:"borrador",synonyms:[...c.synonyms,...c.tags]}));
