@@ -1,12 +1,12 @@
 import {cert,applicationDefault,getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
 import {getItem,library,relatedItems,norm,type LibraryItem} from "@/data/catalog";
-import type {CategoryId} from "@/data/category-config";
+import {libraryCategories,type CategoryId} from "@/data/category-config";
 export type CatalogRow=Pick<LibraryItem,"id"|"title"|"category"|"family"|"summary">;
 export type CatalogPage={items:CatalogRow[];nextCursor:string|null;mode:"local"|"firestore"};
 export type LinkedItem=CatalogRow&{kind:string};
 const PAGE_SIZE=12;
-const categories=new Set<CategoryId>(["psicopatologias","psicofarmacologia","teoria","evaluaciones"]);
+const categories=new Set<CategoryId>(libraryCategories.map(category=>category.id));
 export const validCategory=(value:string|null):CategoryId|undefined=>value&&categories.has(value as CategoryId)?value as CategoryId:undefined;
 export const cloudEnabled=()=>process.env.FIREBASE_CONTENT_ENABLED==="true";
 function db(){
