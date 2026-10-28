@@ -1,3 +1,3 @@
-import {AnimatedLogo} from "@/components/animated-logo";
 import Link from "next/link";
-export function SiteHeader(){return <header className="border-b border-slate-200/75 bg-white/90"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8"><AnimatedLogo/><nav aria-label="Navegación principal" className="flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-brand"><Link href="/">Biblioteca</Link><Link href="/clasificaciones">Por fuente</Link><Link href="/familias/ansiedad">Ansiedad</Link><Link href="/relaciones">Diferenciales</Link><Link href="/comparar?kind=farmacos">Psicofármacos</Link></nav></div></header>}
+import {AnimatedLogo} from "@/components/animated-logo";
+export function SiteHeader() {return <header><div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-6 sm:px-8"><AnimatedLogo/><Link href="/" className="text-sm text-slate-500 hover:text-brand">Buscar</Link></div></header>;}

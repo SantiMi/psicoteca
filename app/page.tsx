@@ -1,2 +1,4 @@
 import {LibrarySearch} from "@/components/library-search";
-export default function HomePage(){return <main className="mx-auto max-w-6xl px-5 pb-12 pt-14 sm:px-8 sm:pt-20"><section className="text-center"><h1 className="text-5xl font-extrabold tracking-tight text-deep sm:text-6xl">Psicoteca<span className="text-brand">.</span></h1><p className="mt-4 text-lg text-slate-600">Psicología y Psiquiatría, de forma simple.</p></section><LibrarySearch/><p className="mt-10 text-center text-xs leading-6 text-slate-500">Biblioteca en construcción: el catálogo todavía no reproduce la totalidad de DSM-5-TR ni CIE-11. Fichas de demostración pendientes de revisión.</p></main>}
+export default function HomePage() {
+ return <main className="mx-auto max-w-3xl px-5 pb-16 pt-14 sm:px-8 sm:pt-24"><h1 className="text-3xl font-bold tracking-tight text-deep sm:text-4xl">Salud mental, en palabras claras.</h1><p className="mt-4 max-w-xl text-base leading-7 text-slate-600">Buscá un trastorno, un medicamento o una diferencia. Encontrá una explicación clara y seguí leyendo solo si lo necesitás.</p><LibrarySearch/></main>;
+}
