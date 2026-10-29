@@ -1,27 +1,48 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useEffect, useRef, useState, type FormEvent} from "react";
 import Link from "next/link";
-import {Search,ArrowUpRight,Brain,Pill,BookOpen,ClipboardList} from "lucide-react";
-import {fourCategories,type CategoryId} from "@/data/category-config";
-type Row={id:string;title:string;category:CategoryId;family:string;summary:string};
-type Result={items:Row[];nextCursor:string|null;mode:string};
-const icons={psicopatologias:Brain,psicofarmacologia:Pill,teoria:BookOpen,evaluaciones:ClipboardList};
-export function LibrarySearch({initialCategory}:{initialCategory?:CategoryId}){
- const [query,setQuery]=useState("");const [category,setCategory]=useState<CategoryId|undefined>(initialCategory);
- const [items,setItems]=useState<Row[]>([]);const [cursor,setCursor]=useState<string|null>(null);
- const [loading,setLoading]=useState(true);const [moreLoading,setMoreLoading]=useState(false);const [error,setError]=useState("");
- useEffect(()=>{const controller=new AbortController();setLoading(true);setError("");
- const timer=setTimeout(async()=>{try{const p=new URLSearchParams();if(query.trim())p.set("q",query.trim());if(category)p.set("category",category);
- const response=await fetch("/api/catalog?"+p.toString(),{signal:controller.signal});if(!response.ok)throw new Error("search unavailable");const data=await response.json() as Result;
- setItems(data.items);setCursor(data.nextCursor);}catch(e){if(!controller.signal.aborted){setError("No se pudo cargar el catálogo. Intentá nuevamente.");setItems([]);setCursor(null);}}finally{if(!controller.signal.aborted)setLoading(false);}},query?280:0);
- return()=>{clearTimeout(timer);controller.abort()};},[query,category]);
- async function more(){if(!cursor)return;setMoreLoading(true);try{const p=new URLSearchParams({cursor});if(query.trim())p.set("q",query.trim());if(category)p.set("category",category);const response=await fetch("/api/catalog?"+p.toString());if(!response.ok)throw new Error("unavailable");const data=await response.json() as Result;setItems(old=>[...old,...data.items.filter(x=>!old.some(y=>y.id===x.id))]);setCursor(data.nextCursor);}catch{setError("No se pudieron cargar más resultados.")}finally{setMoreLoading(false)}}
- return <><div className="relative mx-auto mt-9 max-w-3xl"><Search className="absolute left-5 top-1/2 -translate-y-1/2 text-brand" size={23}/><input aria-label="Buscar en Psicoteca" autoFocus placeholder="¿Qué necesitás consultar?" type="search" value={query} onChange={e=>setQuery(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white py-5 pl-14 pr-5 text-lg text-deep shadow-sm outline-none focus:border-brand focus:ring-4 focus:ring-blue-100"/></div>
- <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">{fourCategories.map(item=>{const Icon=icons[item.id];return <button type="button" key={item.id} onClick={()=>setCategory(v=>v===item.id?undefined:item.id)} aria-pressed={category===item.id} className={`rounded-2xl border p-4 text-left transition hover:border-brand ${category===item.id?"border-brand ring-2 ring-blue-100":"border-slate-200"} ${item.color}`}><Icon className="text-brand" size={25}/><strong className="mt-3 block text-sm text-deep">{item.title}</strong><span className="mt-1 block text-xs text-slate-600">{item.subtitle}</span></button>})}</div>
- <div className="mt-10 flex items-end justify-between gap-3"><div><h2 className="text-xl font-bold text-deep">{category?fourCategories.find(x=>x.id===category)?.title:"Biblioteca"}</h2><p className="mt-1 text-sm text-slate-500">Resultados por página · Catálogo en ampliación</p></div>{category&&<button className="text-sm font-semibold text-brand" onClick={()=>setCategory(undefined)}>Ver todas</button>}</div>
- {loading?<p role="status" className="mt-6 text-sm text-slate-500">Buscando conceptos…</p>:error?<p role="alert" className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>:null}
- <div className="mt-4 grid gap-3 sm:grid-cols-2">{items.map(item=><Link key={item.id} href={`/ficha/${item.id}`} className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand hover:shadow-sm"><span className="text-xs font-semibold uppercase tracking-wide text-brand">{fourCategories.find(c=>c.id===item.category)?.title} · {item.family}</span><div className="mt-2 flex items-start justify-between gap-2"><h3 className="font-bold text-deep">{item.title}</h3><ArrowUpRight className="shrink-0 text-brand" size={18}/></div><p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{item.summary}</p></Link>)}</div>
- {!loading&&!error&&!items.length&&<p className="mt-5 rounded-2xl bg-white p-7 text-slate-600">No encontramos resultados. Probá otro término o quitá el filtro.</p>}
- {cursor&&!loading&&<button onClick={more} disabled={moreLoading} className="mt-6 rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-brand disabled:opacity-50">{moreLoading?"Cargando…":"Ver más resultados"}</button>}
- </>;
+import {ArrowRight, Search, X} from "lucide-react";
+import type {LookupResult} from "@/types/lookup";
+
+const examples = ["Qué es el TAG", "Pánico y ansiedad generalizada", "Efectos de sertralina"];
+export function LibrarySearch() {
+ const [query,setQuery] = useState("");
+ const [result,setResult] = useState<LookupResult | null>(null);
+ const [loading,setLoading] = useState(false);
+ const [error,setError] = useState("");
+ const activeRequest = useRef<AbortController | null>(null);
+ useEffect(() => () => activeRequest.current?.abort(),[]);
+ function edit(value: string) {activeRequest.current?.abort();setQuery(value);setResult(null);setError("");setLoading(false);}
+ async function search(value: string) {
+  const text=value.trim(); if(text.length<2)return;
+  activeRequest.current?.abort();const controller=new AbortController();activeRequest.current=controller;
+  setQuery(value);setLoading(true);setError("");setResult(null);
+  try {const response=await fetch(`/api/lookup?q=${encodeURIComponent(text)}`,{signal:controller.signal});if(!response.ok)throw new Error("lookup failed");const data=await response.json() as LookupResult;if(!controller.signal.aborted)setResult(data);}
+  catch {if(!controller.signal.aborted)setError("No pudimos cargar la explicación. Probá nuevamente.");}
+  finally {if(!controller.signal.aborted)setLoading(false);}
+ }
+ function submit(event: FormEvent) {event.preventDefault();void search(query);}
+ return <div className="mt-8">
+  <form onSubmit={submit} role="search" aria-label="Consultar Psicoteca" className="flex items-center gap-2 rounded-2xl border border-slate-300 bg-white p-2 shadow-sm focus-within:border-brand focus-within:ring-4 focus-within:ring-blue-50">
+   <Search aria-hidden="true" size={21} className="ml-3 shrink-0 text-slate-400"/>
+   <input type="search" aria-label="Qué querés entender" placeholder="¿Qué querés entender?" value={query} maxLength={180} onChange={event=>edit(event.target.value)} className="min-w-0 flex-1 bg-transparent px-1 py-3 text-base text-deep outline-none sm:text-lg"/>
+   {query && <button type="button" aria-label="Limpiar búsqueda" onClick={()=>edit("")} className="rounded-lg p-2 text-slate-400 hover:bg-slate-50"><X size={17}/></button>}
+   <button type="submit" disabled={query.trim().length<2 || loading} className="rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white disabled:opacity-45">{loading ? "Buscando…" : "Buscar"}</button>
+  </form>
+  {!result && !loading && !error && <div className="mt-5 text-sm text-slate-500"><p>Por ejemplo:</p><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">{examples.map(example=><button type="button" key={example} onClick={()=>void search(example)} className="text-left text-brand underline decoration-blue-200 underline-offset-4">{example}</button>)}</div></div>}
+  {loading && <p role="status" className="mt-8 text-sm text-slate-500">Consultando la biblioteca…</p>}
+  {error && <p role="alert" className="mt-8 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">{error}</p>}
+  {result && <div className="mt-9" aria-live="polite">
+   {result.kind === "answer" && result.answer && <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+    <h2 className="text-2xl font-bold text-deep">{result.heading}</h2><p className="mt-4 text-lg leading-8 text-slate-700">{result.answer.summary}</p>
+    <ul className="mt-5 list-disc space-y-2 pl-5 leading-7 text-slate-600">{result.answer.points.map(point=><li key={point}>{point}</li>)}</ul>
+    <Link href={result.answer.href} className="mt-6 inline-flex items-center gap-2 font-semibold text-brand">Entender un poco más <ArrowRight aria-hidden="true" size={16}/></Link>
+    {result.answer.links.length>0 && <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-4 text-sm">{result.answer.links.map(link=><Link key={link.href} href={link.href} className="text-brand underline underline-offset-4">{link.label}</Link>)}</div>}
+    {result.answer.sources.length>0 && <details className="mt-5 text-xs text-slate-500"><summary className="cursor-pointer">Fuentes de esta explicación</summary><ul className="mt-3 space-y-2">{result.answer.sources.map(source=><li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" className="text-brand underline">{source.label} ↗</a></li>)}</ul></details>}
+   </article>}
+   {result.kind === "comparison" && result.comparison && <article className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Una diferencia, en pocas palabras</p><h2 className="mt-2 text-2xl font-bold text-deep">{result.heading}</h2>{result.comparison.shared.map(text=><p key={text} className="mt-4 leading-7 text-slate-600">{text}</p>)}<div className="mt-5 grid gap-5 sm:grid-cols-2">{result.comparison.columns.map(column=><section key={column.title} className="rounded-xl bg-slate-50 p-4"><h3 className="font-bold text-deep">{column.title}</h3><ul className="mt-3 space-y-3 text-sm leading-7 text-slate-700">{column.points.map(point=><li key={point}>{point}</li>)}</ul></section>)}</div>{!result.comparison.documented && <p className="mt-4 text-sm text-slate-500">Mostramos las características disponibles de cada tema. Todavía no tenemos un diferencial documentado para este par.</p>}<Link href={result.comparison.href} className="mt-6 inline-flex items-center gap-2 font-semibold text-brand">Ver la comparación completa <ArrowRight size={16} aria-hidden="true"/></Link>{result.comparison.sources.length>0 && <details className="mt-5 text-xs text-slate-500"><summary className="cursor-pointer">Fuentes de esta comparación</summary><ul className="mt-3 space-y-2">{result.comparison.sources.map(source=><li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" className="text-brand underline">{source.label} ↗</a></li>)}</ul></details>}</article>}
+   {result.kind === "choices" && <><h2 className="text-xl font-bold text-deep">{result.heading}</h2><div className="mt-4 divide-y divide-slate-200">{result.items.map(item=><Link key={item.id} href={item.href} className="block py-4"><h3 className="font-semibold text-brand">{item.title} →</h3><p className="mt-2 text-sm leading-7 text-slate-600">{item.summary}</p></Link>)}</div></>}
+   {result.kind === "empty" && <div className="rounded-xl bg-slate-50 p-6"><h2 className="font-semibold text-deep">{result.heading}</h2><p className="mt-3 text-sm leading-7 text-slate-600">La biblioteca todavía es pequeña. Probá el nombre de un trastorno o medicamento; si buscás una diferencia, escribí ambos nombres.</p></div>}
+  </div>}
+ </div>;
 }

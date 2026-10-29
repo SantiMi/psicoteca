@@ -1,44 +1,44 @@
-# Psicoteca — MVP
+# Psicoteca
 
-Biblioteca web **gratuita**, sin registro, bases de datos ni APIs externas. Stack: Next.js App Router, TypeScript, Tailwind CSS y Lucide React.
+Biblioteca educativa de consulta rápida sobre salud mental. Next.js App Router, TypeScript y Tailwind.
 
-## Requisitos
-- Node.js 20.9 o superior (recomendado: Node.js 22 LTS)
-- Conexión a internet **solo al instalar las dependencias** por primera vez
+## Inicio local
 
-## Iniciar en Windows (PowerShell), macOS o Linux
-1. Descomprimí `psicoteca-mvp.zip`.
-2. Abrí la carpeta `psicoteca-mvp` en una terminal (o Visual Studio Code > Terminal > Nueva terminal).
-3. Ejecutá:
+Con Node.js 20.9 o superior:
 
-```bash
-npm install
+```sh
+npm ci
 npm run dev
 ```
 
-4. Abrí **http://localhost:3000** en Chrome, Edge, Firefox o Safari.
+Abrir http://localhost:3000. Para la copia de producción local: `npm run build` y `npm run start`.
 
-> No se abre haciendo doble clic en `index.html`: es una app Next.js y requiere iniciar el servidor local.
+## Consulta
 
-## Verificar
+La portada presenta un buscador, sin catálogo desplegado. Reconoce nombres y preguntas acotadas sobre los temas disponibles, por ejemplo «qué es el TAG», «medicación para TAG», «efectos adversos de sertralina» o «diferencias entre pánico y ansiedad generalizada». Las consultas amplias ofrecen temas para elegir. Las consultas sin cobertura lo indican.
 
-```bash
+`data/search-intent.ts` resuelve la intención sobre el catálogo conocido. `app/api/lookup/route.ts` devuelve respuestas breves, opciones o comparaciones; no utiliza un modelo generativo ni infiere diagnósticos de síntomas. Cada explicación permite abrir la ficha y consultar las fuentes. Las fichas muestran lo esencial y reservan la profundización y bibliografía a apartados desplegables.
+
+La síntesis clínica disponible cubre pánico, ansiedad generalizada, ansiedad social, fobia específica y depresión; el comparador farmacológico incluye sertralina, escitalopram, fluoxetina y paroxetina. Existe contenido introductorio adicional en `data/catalog.ts`. La biblioteca es piloto: no es un buscador de todo el DSM/CIE ni extrae automáticamente contenido nuevo de los PDF.
+
+## Datos y publicación
+
+Por defecto se utiliza el catálogo local de revisión. Con `FIREBASE_CONTENT_ENABLED=true`, la lectura de Firestore exige `visibility == published`. Las síntesis clínicas locales no se añaden a los documentos publicados. La importación y los índices de fuentes se definen en los scripts de preparación y los módulos de `data/`; las credenciales se configuran fuera del repositorio. No versionar archivos `.env` ni cuentas de servicio.
+
+El contenido requiere revisión especializada. Es educativo, sin dosis ni indicaciones personales de tratamiento. Las fichas enlazan NIMH, OMS, NICE y MedlinePlus según corresponda.
+
+## Verificación
+
+```sh
+npm test
 npm run typecheck
 npm run build
 ```
 
-Para servir una compilación de producción: `npm run start` después de `npm run build`.
+Las pruebas cubren integridad de fuentes y relaciones, selección de comparaciones y resolución de las consultas principales. La comprobación visual debe incluir portada vacía, respuesta breve, consulta ambigua, ausencia de cobertura, diferencial y navegación a fuentes y medicamentos.
 
-## Agregar conceptos
+## Ampliación del inventario
 
-Editá `data/concepts.ts` y agregá un objeto dentro del arreglo `concepts` con la misma estructura de los existentes. Atributos requeridos: `slug` (único, para la URL), `title`, `category` (de `data/categories.ts`), `tags`, `synonyms`, `summary`, `essentials`, `deeper`, `references`, `related`. Los temas relacionados usan `slug` de otros conceptos existentes. Al guardar, Next.js actualiza la app en desarrollo.
+Las herramientas de `scripts/inventory/` preparan un inventario local y versionado de entradas DSM/CIE con localizadores y estados separados de extracción, revisión y contenido. La primera extracción reúne 1.179 filas candidatas del DSM y 1.042 entradas oficiales de CIE-11 MMS 2024-01 en los capítulos 06, 07 y 17. No son recuentos de trastornos distintos ni fichas clínicas completas.
 
-Categorías: `data/categories.ts`. Los tipos para contenido están en `types/content.ts`. La búsqueda local sin acentos está en `lib/content.ts`.
-
-## Nota editorial
-
-Las 5 fichas son demostrativas y tienen aviso de revisión editorial. La bibliografía enlaza fuentes institucionales o identifica obras académicas. El contenido no reemplaza evaluación profesional, diagnóstico ni prescripción. No se incluyeron dosis ni instrucciones farmacológicas.
-
-## Estado de verificación de esta entrega
-
-El código se generó y revisó estructuralmente. El entorno de generación no tuvo acceso a `registry.npmjs.org`, por lo que **no fue posible instalar dependencias ni ejecutar `next build` / `tsc` aquí**. Ejecutá `npm install`, `npm run typecheck` y `npm run build` en tu máquina para completar esa validación.
+El método, los límites y la reproducción están en [scripts/inventory/README.md](scripts/inventory/README.md). La revisión local usa `/cobertura`, deshabilitada por defecto; los datos generados están ignorados en Git y no se publican en el buscador. Los comandos de preparación no escriben Firestore.
