@@ -36,3 +36,9 @@ npm run build
 ```
 
 Las pruebas cubren integridad de fuentes y relaciones, selección de comparaciones y resolución de las consultas principales. La comprobación visual debe incluir portada vacía, respuesta breve, consulta ambigua, ausencia de cobertura, diferencial y navegación a fuentes y medicamentos.
+
+## Ampliación del inventario
+
+Las herramientas de `scripts/inventory/` preparan un inventario local y versionado de entradas DSM/CIE con localizadores y estados separados de extracción, revisión y contenido. La primera extracción reúne 1.179 filas candidatas del DSM y 1.042 entradas oficiales de CIE-11 MMS 2024-01 en los capítulos 06, 07 y 17. No son recuentos de trastornos distintos ni fichas clínicas completas.
+
+El método, los límites y la reproducción están en [scripts/inventory/README.md](scripts/inventory/README.md). La revisión local usa `/cobertura`, deshabilitada por defecto; los datos generados están ignorados en Git y no se publican en el buscador. Los comandos de preparación no escriben Firestore.
